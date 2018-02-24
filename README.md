@@ -40,6 +40,19 @@ systemctl --user start mewgrepd
 
 ## 使い方
 
+- Mew の設定
+
+  ```elisp
+  (el-get-bundle mew
+    (with-eval-after-load-feature 'mew-search
+      (require 'mew-mewgrep))
+    )
+  ```
+
+  私は el-get を使っているのでこうしています。
+  mew-search が読み込まれたら mew-mewgrep を読み込む、と設定できれば
+  問題ありません。
+
 - index の作り方
 
   コマンドラインで以下のように実行してください。
@@ -85,6 +98,8 @@ systemctl --user start mewgrepd
 出力します。`C` は create、`D` は delete です。
 
 `mewgrep.py` は検索します。
+コメントにクエリの文法を簡単に書いてあります。
+RFC で使われてる記法がこんなのだったかな、と思い出しながらイメージとして。
 
 `voca.py` と `corpus.py` は上記プログラムから使われます。
 `voca.py` は単語の管理、`corpus.py` は index の管理をします。
