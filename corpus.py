@@ -4,54 +4,48 @@ import re
 import struct
 import numpy as np
 import scipy.sparse as sp
+import pickle
+
+import datetime
 
 class Corpus:
-    def __init__(self):
+    def __init__(self, voca):
         self.__i2p = []
         self.__p2i = {}
         self.__i2m = []
+        self.__voca = voca
+        self.__dirty = False
     
-    def save(self, paths_file, index_file):
-        with open(paths_file, 'w') as f:
-            for word in self.__i2p:
-                if not word:
-                    word = ''
-                print(word, file=f)
-        ints = []
-        for i, m in enumerate(self.__i2m):
-            if m:
-                ints.append(i)
-                ints.append(len(m))
-                ints += list(m)
-        ints.insert(0, len(ints))
+    def save(self, paths_file, index_file, matrix_file):
+        with open(paths_file, 'wb') as f:
+            pickle.dump(self.__i2p, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
         with open(index_file, 'wb') as f:
-            f.write(struct.pack(f'<{len(ints)}I', *ints))
+            pickle.dump(self.__i2m, f, protocol=pickle.HIGHEST_PROTOCOL)
+        
+        with open(matrix_file, 'wb') as f:
+            pickle.dump(self.get_matrix(), f, protocol=pickle.HIGHEST_PROTOCOL)
     
-    def load(self, paths_file, index_file):
-        with open(paths_file) as f:
-            self.__i2p = f.read().splitlines()
+    def load(self, paths_file, index_file, matrix_file):
+        # print('reading paths.')
+        with open(paths_file, 'rb') as f:
+            self.__i2p = pickle.load(f)
         self.__p2i = { path: i for i, path in enumerate(self.__i2p) }
         
-        with open(index_file, 'rb') as f:
-            nr_ints, = struct.unpack('<I', f.read(4))
-            ints = struct.unpack(f'<{nr_ints}I', f.read(nr_ints * 4))
+        # print('reading index.')
+        if index_file:
+            with open(index_file, 'rb') as f:
+                self.__i2m = pickle.load(f)
+        else:
+            self.__i2m = None
         
-        i = 0
-        while i < len(ints):
-            mail_no = ints[i]
-            i += 1
-            
-            nr_words = ints[i]
-            i += 1
-            
-            word_idxes = ints[i:i+nr_words]
-            i += nr_words
-            
-            while len(self.__i2m) < mail_no + 1:
-                self.__i2m.append(None)
-            self.__i2m[mail_no] = set(word_idxes)
+        # print('reading matrix.')
+        with open(matrix_file, 'rb') as f:
+            self.__mat = pickle.load(f)
+        # print('done.')
+        self.__dirty = False
     
-    def add(self, path, words, voca):
+    def add(self, path, words):
         try:
             i = self.__p2i[path]
         except KeyError:
@@ -59,12 +53,14 @@ class Corpus:
             self.__i2p.append(path)
             self.__p2i[path] = i
         
-        m = { voca.get_no(word) for word in words }
+        m = { self.__voca.get_no(word) for word in words }
         
         while len(self.__i2m) < i + 1:
             self.__i2m.append(None)
         self.__i2m[i] = m
     
+        self.__dirty = True
+
     def remove(self, path):
         try:
             i = self.__p2i[path]
@@ -73,6 +69,8 @@ class Corpus:
             self.__i2m[i] = None
         except KeyError:
             pass
+        
+        self.__dirty = True
     
     def get_path(self, i):
         return self.__i2p[i]
@@ -80,11 +78,15 @@ class Corpus:
     def get_sub_paths(self, folders):
         return { i for i, p in enumerate(self.__i2p) if re.sub(r'/\d+$', '', p) in folders }
     
-    def make_matrix(self, voca):
+    def get_matrix(self):
+        if not self.__dirty:
+            return self.__mat
         rows = []
         cols = []
         for i, m in enumerate(self.__i2m):
             if m:
                 rows += [ i ] * len(m)
                 cols += list(m)
-        return sp.csr_matrix(( [1] * len(cols), ( rows, cols ) ), shape=(len(self.__i2m), voca.size()), dtype=np.int8)
+        self.__mat = sp.csr_matrix(( [1] * len(cols), ( rows, cols ) ), shape=(len(self.__i2m), self.__voca.size()), dtype=np.int8)
+        self.__dirty = False
+        return self.__mat

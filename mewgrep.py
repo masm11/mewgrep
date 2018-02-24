@@ -35,8 +35,10 @@ if not q:
     raise RuntimeError('-q <query> not specified.')
 
 FILENAME_VOCA = f'{maildir}/.mewgrep-voca.txt'
-FILENAME_PATHS = f'{maildir}/.mewgrep-paths.txt'
+FILENAME_PATHS = f'{maildir}/.mewgrep-paths.bin'
 FILENAME_INDEX = f'{maildir}/.mewgrep-index.bin'
+FILENAME_MATRIX = f'{maildir}/.mewgrep-matrix.bin'
+FILENAME_CHGLOG = f'{maildir}/.mewgrep-changelog.txt'
 
 if not debugging:
     sys.stderr = open('/dev/null', 'w')
@@ -46,11 +48,11 @@ voca = Voca()
 voca.load(FILENAME_VOCA)
 
 print('loading corpus.', file=sys.stderr)
-corpus = Corpus()
-corpus.load(FILENAME_PATHS, FILENAME_INDEX)
+corpus = Corpus(voca)
+corpus.load(FILENAME_PATHS, None, FILENAME_MATRIX)
 
 print('making matrix.', file=sys.stderr)
-mailmat = corpus.make_matrix(voca)
+mailmat = corpus.get_matrix()
 
 # EXPR = EXPR_OR
 # EXPR_OR = EXPR_AND ( 'or' EXPR_AND )*

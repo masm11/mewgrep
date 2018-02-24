@@ -33,8 +33,9 @@ def print_progress(label):
 
 maildir = f'{os.environ["HOME"]}/Mail'
 FILENAME_VOCA = f'{maildir}/.mewgrep-voca.txt'
-FILENAME_PATHS = f'{maildir}/.mewgrep-paths.txt'
+FILENAME_PATHS = f'{maildir}/.mewgrep-paths.bin'
 FILENAME_INDEX = f'{maildir}/.mewgrep-index.bin'
+FILENAME_MATRIX = f'{maildir}/.mewgrep-matrix.bin'
 FILENAME_CHGLOG = f'{maildir}/.mewgrep-changelog.txt'
 
 MAX_WORKERS = 5
@@ -262,7 +263,7 @@ def get_words_from_mail(mail):
     return words
 
 voca = Voca()
-corpus = Corpus()
+corpus = Corpus(voca)
 
 if not updating_index:
     print_progress('listing.')
@@ -274,7 +275,7 @@ if not updating_index:
 else:
     print_progress('loading.')
     voca.load(FILENAME_VOCA)
-    corpus.load(FILENAME_PATHS, FILENAME_INDEX)
+    corpus.load(FILENAME_PATHS, FILENAME_INDEX, FILENAME_MATRIX)
     
     removed = set()
     created = set()
@@ -311,17 +312,18 @@ with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor
     for future in concurrent.futures.as_completed(future_to_mail):
         mail = future_to_mail[future]
         try:
-            corpus.add(mail.path, future.result(), voca)
+            corpus.add(mail.path, future.result())
         except Exception as e:
             print(mail.path)
             traceback.print_exc()
 
 print_progress('saving.')
 voca.save(f'{FILENAME_VOCA}.new')
-corpus.save(f'{FILENAME_PATHS}.new', f'{FILENAME_INDEX}.new')
+corpus.save(f'{FILENAME_PATHS}.new', f'{FILENAME_INDEX}.new', f'{FILENAME_MATRIX}.new')
 
 os.rename(f'{FILENAME_VOCA}.new', FILENAME_VOCA)
 os.rename(f'{FILENAME_PATHS}.new', FILENAME_PATHS)
 os.rename(f'{FILENAME_INDEX}.new', FILENAME_INDEX)
+os.rename(f'{FILENAME_MATRIX}.new', FILENAME_MATRIX)
 
 print_progress('done.')
