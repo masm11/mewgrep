@@ -32,11 +32,12 @@ def print_progress(label):
     print(subprocess.run(['bash', '-c', 'ps auxww | grep make-index']))
 
 maildir = f'{os.environ["HOME"]}/Mail'
-FILENAME_VOCA = f'{maildir}/.mewgrep-voca.txt'
-FILENAME_PATHS = f'{maildir}/.mewgrep-paths.bin'
-FILENAME_INDEX = f'{maildir}/.mewgrep-index.bin'
-FILENAME_MATRIX = f'{maildir}/.mewgrep-matrix.bin'
-FILENAME_CHGLOG = f'{maildir}/.mewgrep-changelog.txt'
+indexdir = '/opt/mewgrep'
+FILENAME_VOCA = f'{indexdir}/.mewgrep-voca.txt'
+FILENAME_PATHS = f'{indexdir}/.mewgrep-paths.bin'
+FILENAME_INDEX = f'{indexdir}/.mewgrep-index.bin'
+FILENAME_MATRIX = f'{indexdir}/.mewgrep-matrix.bin'
+FILENAME_CHGLOG = f'{indexdir}/.mewgrep-changelog.txt'
 
 MAX_WORKERS = 5
 

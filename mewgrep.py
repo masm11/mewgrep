@@ -15,6 +15,8 @@ from corpus import Corpus
 debugging = sys.stdout.isatty()
 
 maildir = f'{os.environ["HOME"]}/Mail'
+indexdir = '/opt/mewgrep'
+
 folders = set()
 q = None
 i = 1
@@ -34,11 +36,11 @@ while i < len(sys.argv):
 if not q:
     raise RuntimeError('-q <query> not specified.')
 
-FILENAME_VOCA = f'{maildir}/.mewgrep-voca.txt'
-FILENAME_PATHS = f'{maildir}/.mewgrep-paths.bin'
-FILENAME_INDEX = f'{maildir}/.mewgrep-index.bin'
-FILENAME_MATRIX = f'{maildir}/.mewgrep-matrix.bin'
-FILENAME_CHGLOG = f'{maildir}/.mewgrep-changelog.txt'
+FILENAME_VOCA = f'{indexdir}/.mewgrep-voca.txt'
+FILENAME_PATHS = f'{indexdir}/.mewgrep-paths.bin'
+FILENAME_INDEX = f'{indexdir}/.mewgrep-index.bin'
+FILENAME_MATRIX = f'{indexdir}/.mewgrep-matrix.bin'
+FILENAME_CHGLOG = f'{indexdir}/.mewgrep-changelog.txt'
 
 if not debugging:
     sys.stderr = open('/dev/null', 'w')

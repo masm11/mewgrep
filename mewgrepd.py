@@ -8,6 +8,8 @@ import re
 os.umask(0o077)
 
 maildir = f'{os.environ["HOME"]}/Mail'
+indexdir = '/opt/mewgrep'
+
 i = 1
 while i < len(sys.argv):
     if sys.argv[i] == '-r':
@@ -28,8 +30,8 @@ MAIL_FILE_REGEX = re.compile(r'^.*/\d+$')
 
 class EventHandler(pyinotify.ProcessEvent):
     def __init__(self):
-        self.__f = open(f'{maildir}/.mewgrep-changelog.txt', 'a')
-        self.__changelog_path = f'{maildir}/.mewgrep-changelog.txt'
+        self.__f = open(f'{indexdir}/.mewgrep-changelog.txt', 'a')
+        self.__changelog_path = f'{indexdir}/.mewgrep-changelog.txt'
     
     def __record_changelog(self, mark, path):
         path = path[len(maildir)+1:]		# +1 for '/'.
@@ -65,4 +67,6 @@ class EventHandler(pyinotify.ProcessEvent):
 handler = EventHandler()
 notifier = pyinotify.Notifier(wm, handler)
 wm.add_watch(maildir, mask, rec=True)
+if maildir != indexdir:
+    wm.add_watch(indexdir, mask, rec=True)
 notifier.loop()
