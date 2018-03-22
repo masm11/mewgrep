@@ -7,7 +7,11 @@ import struct
 import subprocess
 import numpy as np
 import scipy.sparse as sp
-import MeCab
+# import MeCab
+import sudachipy.config
+import sudachipy.dictionary
+import sudachipy.tokenizer
+import json
 
 from voca import Voca
 from corpus import Corpus
@@ -202,24 +206,14 @@ SYMBOL_ONLY_REGEX = re.compile(r'^[\x00-/:-@\[-`{-\x7f]*$')
 
 def get_words(text):
     words = set()
-    m = tagger.parse(text)
-    for line in m.splitlines():
-        tab_idx = line.find('\t')
-        if tab_idx == -1:
+    for m in tokenizer.tokenize(sudachipy.tokenizer.Tokenizer.SplitMode.A, text):
+        surface = m.surface()
+        if m.part_of_speech()[0] in { '助詞', '補助記号' }:
             continue
-        surface = line[:tab_idx]
-        features = line[tab_idx+1:]
-        features = features.split(',')
-        if features[0] in { '助詞', '記号' }:
+        word = m.normalized_form()
+        if re.match(SYMBOL_ONLY_REGEX, word):
             continue
-        orig = '*'
-        if len(features) >= 7:
-            orig = features[6]
-        if orig == '*':
-            orig = surface
-        if re.match(SYMBOL_ONLY_REGEX, orig):
-            continue
-        words.add(orig)
+        words.add(word)
     return words
 
 def eval_str(q):
@@ -256,7 +250,10 @@ if folders:
 else:
     all_mails = frozenset(range(mailmat.shape[0]))
 
-tagger = MeCab.Tagger()
+with open(sudachipy.config.SETTINGFILE, 'r') as f:
+    settings = json.load(f)
+tokenizer = sudachipy.dictionary.Dictionary(settings).create()
+
 #print(all_mails)
 mails = eval_expr(q)
 #print(mails)

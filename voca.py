@@ -24,7 +24,10 @@ class Voca:
     
     def load(self, file):
         with open(file) as f:
-            self.__i2w = f.read().splitlines()
+            v = f.read()
+            if v[-1] == '\n':
+                v = v[:-1]
+            self.__i2w = v.split('\n')   # splitlines() は行境界が固定で、U+2028 なんかも含まれてるので、ここでは使えない。
             self.__w2i = { word: i for i, word in enumerate(self.__i2w) }
 
     def size(self):

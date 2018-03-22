@@ -44,7 +44,7 @@ class Corpus:
             self.__mat = pickle.load(f)
         # print('done.')
         self.__dirty = False
-    
+        
     def add(self, path, words):
         try:
             i = self.__p2i[path]
@@ -72,6 +72,13 @@ class Corpus:
         
         self.__dirty = True
     
+    def clear(self):
+        self.__i2p = None
+        self.__p2i = None
+        self.__i2m = None
+        self.__voca = None
+        self.__mat = None
+
     def get_path(self, i):
         return self.__i2p[i]
     
