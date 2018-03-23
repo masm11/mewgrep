@@ -83,7 +83,7 @@ class Corpus:
         return self.__i2p[i]
     
     def get_sub_paths(self, folders):
-        return { i for i, p in enumerate(self.__i2p) if re.sub(r'/\d+$', '', p) in folders }
+        return { i for i, p in enumerate(self.__i2p) if p is not None and re.sub(r'/\d+$', '', p) in folders }
     
     def get_matrix(self):
         if not self.__dirty:
