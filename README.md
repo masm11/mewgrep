@@ -13,7 +13,9 @@ CPU も結構食います。
 ## 必要なもの
 
 - python3 (3.6 以上)
-- sudachipy
+- sudachi
+- jdk9-openjdk
+- JSON In Java
 - numpy
 - scipy
 - bs4 (BeautifulSoup)
@@ -21,53 +23,23 @@ CPU も結構食います。
 
 最新でないと動かないかもしれません。
 
-## sudachipy にパッチを当てる
-
-sudachipy には以下のパッチを当ててインストールしてください。
-特に、utf8inputtextbuilder.py の修正は、これを当てないと IndexError が出ます。
-
-```diff
---- sudachipy/utf8inputtextbuilder.py.org	2018-03-18 21:41:11.105646074 +0900
-+++ sudachipy/utf8inputtextbuilder.py	2018-03-18 21:49:12.960241490 +0900
-@@ -24,7 +24,7 @@
-         if end > len(self.modified_text):
-             end = len(self.modified_text)
- 
--        self.modified_text = self.modified_text.replace(self.modified_text[begin:end], str_)
-+        self.modified_text = self.modified_text[:begin] + str_ + self.modified_text[end:]
- 
-         offset = self.text_offsets[begin]
-         length = len(str_)
-```
-
-```diff
---- sudachipy/dictionary.py.org	2018-03-18 18:01:24.085005430 +0900
-+++ sudachipy/dictionary.py	2018-03-18 18:57:44.640156417 +0900
-@@ -57,8 +57,8 @@
-     def read_system_dictionary(self, filename):
-         if filename is None:
-             raise AttributeError("system dictionary is not specified")
--        with open(filename, 'r+b') as system_dic:
--            bytes_ = mmap.mmap(system_dic.fileno(), 0, access=mmap.ACCESS_READ)
-+        with open(filename, 'rb') as system_dic:
-+            bytes_ = mmap.mmap(system_dic.fileno(), 0, access=mmap.ACCESS_READ|mmap.MAP_SHARED)
-         self.buffers.append(bytes_)
- 
-         offset = 0
-@@ -74,8 +74,8 @@
-         self.lexicon = dictionarylib.lexiconset.LexiconSet(dictionarylib.doublearraylexicon.DoubleArrayLexicon(bytes_, offset))
- 
-     def read_user_dictionary(self, filename):
--        with open(filename, 'r+b') as user_dic:
--            bytes_ = mmap.mmap(user_dic.fileno(), 0, prot=mmap.PROT_READ)
-+        with open(filename, 'rb') as user_dic:
-+            bytes_ = mmap.mmap(user_dic.fileno(), 0, prot=mmap.PROT_READ|mmap.MAP_SHARED)
-         self.buffers.append(bytes_)
- 
-         user_lexicon = dictionarylib.doublearraylexicon.DoubleArrayLexicon(bytes_, 0)
-```
-
 ## インストール方法
+
+### MewGrepTokenizer コンパイル
+
+JSON In Java が必要です。
+
+https://mvnrepository.com/artifact/org.json/json
+
+↑ここからダウンロードしてください。
+
+```sh
+javac -classpath .:json-20180130.jar:sudachi-0.1.0.jar MewGrepTokenizer.java
+```
+
+こんな感じでコンパイルできると思います。
+
+### python 側
 
 `*.py` を全て同じディレクトリに置いて下さい。
 
@@ -95,16 +67,24 @@ systemctl --user start mewgrepd
     )
   ```
 
-  私は el-get を使っているのでこうしています。
+  私は el-get を使っているのでこのように書いています。
   mew-search が読み込まれたら mew-mewgrep を読み込む、と設定できれば
   問題ありません。
+
+- まず
+
+  MewGrepTokenizer を起動させる必要があります。
+
+  ```sh
+  java -classpath .:json-20180130.jar:sudachi-0.1.0.jar MewGrepTokenizer
+  ```
 
 - index の作り方
 
   コマンドラインで以下のように実行してください。
 
   ```sh
-  mewgrep --make-index.py --init
+  mewgrep --make-index --init
   ```
 
   仕様的におかしいメールについては、いろいろ例外のメッセージが出力されます。
@@ -117,7 +97,7 @@ systemctl --user start mewgrepd
   代わりにコマンドラインで、
 
   ```sh
-  mewgrep --make-index.py
+  mewgrep --make-index
   ```
 
   と実行してもできます。
@@ -162,11 +142,10 @@ CPU の core 数に応じて変えると良いかと思います。
 ## 感想など
 
 最近、自然言語処理を勉強してて、作りたくなったので作ってみました。
-「自然言語処理」と言えるような処理は何もありません。sudachipy 使ってるだけです。
+「自然言語処理」と言えるような処理は何もありません。sudachi 使ってるだけです。
 
-遅いしメモリは食うし。
-index を作るのに時間がかかるのはある程度仕方のないことだと思いますし、
-だから inotify なんか使って軽減してるわけですが。
+そこそこ速いと思いますが、メモリは食います。
+速いとは言え、時間はやはりかかりますので、inotify なんか使って軽減してます。
 
 検索精度があまり良くなくて残念な感じになってしまいました。
 
