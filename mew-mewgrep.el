@@ -1,7 +1,6 @@
 (require 'mew-search)
 
-(setq mew-prog-mewgrep "/home/masm/bin/mewgrep.py")
-(setq mew-prog-mewgrep-make-index "/home/masm/bin/mewgrep-make-index.py")
+(setq mew-prog-mewgrep "/home/masm/bin/mewgrep")
 
 (add-to-list 'mew-search-switch
 	     `(mewgrep					; key
@@ -67,8 +66,10 @@
 (defun mew-mewgrep-index-all ()
   "Make mewgrep index for all folders."
   (interactive)
-  (start-process mew-prog-mewgrep-make-index nil mew-prog-mewgrep-make-index)
-  (message "Mewgrep indexing for all folders in background..."))
+  (let* ((ent (mew-search-get-ent mew-search-method))
+	 (prog (mew-search-get-prog ent)))
+    (start-process prog nil mew-prog-mewgrep "--make-index")
+    (message "Mewgrep indexing for all folders in background...")))
 
 (defun mew-pick-canonicalize-pattern-mewgrep (pattern)
   (let ((mew-inherit-pick-omit-and t)

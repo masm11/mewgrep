@@ -1,0 +1,25 @@
+#!/bin/sh
+
+MEWGREP_DIR=/home/masm/src/mewgrep
+
+case "$1" in
+--help)
+  echo "Usage: mewgrep <ARGS>"
+  echo "  To print this message:"
+  echo "       mewgrep --help"
+  echo "  To create index from scratch:"
+  echo "       mewgrep --make-index --init"
+  echo "  To update index:"
+  echo "       mewgrep --make-index"
+  echo "  To search:"
+  echo "       mewgrep -q <QUERY>"
+  exit 0
+  ;;
+--make-index)
+  shift
+  exec $MEWGREP_DIR/mewgrep-make-index.py "$@"
+  ;;
+*)
+  exec $MEWGREP_DIR/mewgrep.py "$@"
+  ;;
+esac

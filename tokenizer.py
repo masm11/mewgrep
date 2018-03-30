@@ -1,32 +1,32 @@
 import re
 import json
 import traceback
-
-import sudachipy.config
-import sudachipy.dictionary
-import sudachipy.tokenizer
+import socket
 
 class Tokenizer:
     
-    EMOJI_REGEX = re.compile(r'[\U0001f000-\U0001f9ff]')
-    SYMBOL_ONLY_REGEX = re.compile(r'^[\x00-/:-@\[-`{-\x7f]*$')
-    
     def __init__(self):
-        with open(sudachipy.config.SETTINGFILE, 'r') as f:
-            settings = json.load(f)
-        self.__tokenizer = sudachipy.dictionary.Dictionary(settings).create()
-
-    def get_words(self, text):
+        pass
+    
+    def get_words(self, text, modes = 'ABC'):
+        sock = None
         try:
-            text = re.sub(self.EMOJI_REGEX, ' ', text)
+            h = { 'modes': modes, 'text': text }
+            j = json.dumps(h)
+            sock = socket.create_connection(('127.0.0.1', 18080))
+            sock.send(j.encode('UTF-8'))
+            sock.shutdown(socket.SHUT_WR)
+            buf = b''
+            while True:
+                b = sock.recv(1024)
+                if b is None or b == b'':
+                    break
+                buf += b
             words = set()
-            for m in self.__tokenizer.tokenize(sudachipy.tokenizer.Tokenizer.SplitMode.A, text):
-                if m.part_of_speech()[0] in { '助詞', '補助記号' }:
-                    continue
-                word = m.normalized_form()
-                if re.match(self.SYMBOL_ONLY_REGEX, word):
-                    continue
+            j = json.loads(buf.decode('UTF-8'))
+            for word in j:
                 words.add(word)
+            # print(words)
             return words
         except Exception as e:
             with open('/dev/tty', 'w') as f:
@@ -36,4 +36,6 @@ class Tokenizer:
                 print(text, file=f)
                 print('----------------------------------------', file=f)
             raise e
-    
+        finally:
+            if sock:
+                sock.close()

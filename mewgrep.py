@@ -8,13 +8,11 @@ import subprocess
 import numpy as np
 import scipy.sparse as sp
 # import MeCab
-import sudachipy.config
-import sudachipy.dictionary
-import sudachipy.tokenizer
 import json
 
 from voca import Voca
 from corpus import Corpus
+from tokenizer import Tokenizer
 
 debugging = sys.stdout.isatty()
 
@@ -205,16 +203,8 @@ def eval_expr_par(q):
 SYMBOL_ONLY_REGEX = re.compile(r'^[\x00-/:-@\[-`{-\x7f]*$')
 
 def get_words(text):
-    words = set()
-    for m in tokenizer.tokenize(sudachipy.tokenizer.Tokenizer.SplitMode.A, text):
-        surface = m.surface()
-        if m.part_of_speech()[0] in { '助詞', '補助記号' }:
-            continue
-        word = m.normalized_form()
-        if re.match(SYMBOL_ONLY_REGEX, word):
-            continue
-        words.add(word)
-    return words
+    tokenizer = Tokenizer()
+    return tokenizer.get_words(text)
 
 def eval_str(q):
     try:
@@ -249,10 +239,6 @@ if folders:
     all_mails = corpus.get_sub_paths(folders)
 else:
     all_mails = frozenset(range(mailmat.shape[0]))
-
-with open(sudachipy.config.SETTINGFILE, 'r') as f:
-    settings = json.load(f)
-tokenizer = sudachipy.dictionary.Dictionary(settings).create()
 
 #print(all_mails)
 mails = eval_expr(q)

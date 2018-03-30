@@ -149,28 +149,23 @@ if __name__ == '__main__':
     print('pid=', os.getpid())
     # multiprocessing.set_start_method('forkserver')
 
-    print_progress('parsing new files.')
+    print_progress('parsing files.')
     mails = [ Mail(path) for path in created ]
     nr_total = len(mails)
     nr_done = 0
-    while mails:
-        # recreate process pool by each 1000 mails.
-        split_mails = mails[:1000]
-        mails = mails[1000:]
-        print_progress('parsing 1000 files.')
-        with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
-            future_to_mail = { executor.submit(get_words_from_mail, maildir, mail): mail for mail in split_mails }
-            for future in concurrent.futures.as_completed(future_to_mail):
-                mail = future_to_mail[future]
-                try:
-                    corpus.add(mail.path, future.result())
-                    nr_done += 1
-                except Exception as e:
-                    print(mail.path)
-                    traceback.print_exc()
-                    nr_done += 1
-                with open('/dev/tty', 'w') as f:
-                    print(f'{nr_done} / {nr_total}', end='\r', flush=True, file=f)
+    with concurrent.futures.ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        future_to_mail = { executor.submit(get_words_from_mail, maildir, mail): mail for mail in mails }
+        for future in concurrent.futures.as_completed(future_to_mail):
+            mail = future_to_mail[future]
+            try:
+                corpus.add(mail.path, future.result())
+                nr_done += 1
+            except Exception as e:
+                print(mail.path)
+                traceback.print_exc()
+                nr_done += 1
+            with open('/dev/tty', 'w') as f:
+                print(f'{nr_done} / {nr_total}', end='\r', flush=True, file=f)
     
     print_progress('saving.')
     voca.save(f'{FILENAME_VOCA}.new')

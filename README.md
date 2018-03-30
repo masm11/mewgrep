@@ -75,7 +75,7 @@ sudachipy には以下のパッチを当ててインストールしてくださ�
 `ExecStart=` は修正してください。
 
 `mew-mewgrep.el` は emacs の load path が通った場所に置いて下さい。
-`mew-prog-mewgrep` と `mew-prog-mewgrep-make-index` は修正してください。
+`mew-prog-mewgrep` は修正してください。
 
 以下を実行してください。
 
@@ -104,7 +104,7 @@ systemctl --user start mewgrepd
   コマンドラインで以下のように実行してください。
 
   ```sh
-  mewgrep-make-index.py --init
+  mewgrep --make-index.py --init
   ```
 
   仕様的におかしいメールについては、いろいろ例外のメッセージが出力されます。
@@ -117,7 +117,7 @@ systemctl --user start mewgrepd
   代わりにコマンドラインで、
 
   ```sh
-  mewgrep-make-index.py
+  mewgrep --make-index.py
   ```
 
   と実行してもできます。
